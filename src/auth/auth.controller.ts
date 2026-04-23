@@ -1,0 +1,96 @@
+import {
+  Body,
+  Controller,
+  Post,
+  UseGuards,
+  ValidationPipe,
+} from "@nestjs/common";
+import { AuthService } from "./auth.service";
+import { ResetPasswordDto, SignInDto, SignUpDto } from "./Dto/auth.dto";
+import { AuthGuard } from "src/employee/guard/Auth.guard";
+import { Roles } from "src/employee/decorator/employee.docerator";
+
+@Controller("auth")
+export class AuthController {
+  constructor(private readonly authService: AuthService) {}
+
+  // @docs Sign Up
+  // @Route POST /api/v1/auth/sign-up
+  // @access Public
+  @Roles(["manager"])
+  @UseGuards(AuthGuard)
+  @Post("sign-up")
+  signUp(
+    @Body(
+      new ValidationPipe({
+        forbidNonWhitelisted: true,
+      })
+    )
+    signUpDto: SignUpDto
+  ) {
+    return this.authService.signUp(signUpDto);
+  }
+
+  @Post("login")
+  async signIn(
+    @Body(
+      new ValidationPipe({
+        forbidNonWhitelisted: true,
+      })
+    )
+    signInDto: SignInDto
+  ) {
+    return this.authService.signIn(signInDto);
+  }
+
+  //@docs Any User Can Reset Password
+  //@Route POST/api/v1/auth/reset-password
+  //@access Public
+  @Post("reset-password")
+  async resetPassword(
+    @Body(
+      new ValidationPipe({
+        forbidNonWhitelisted: true,
+      })
+    )
+    email: ResetPasswordDto
+  ) {
+    return this.authService.resetPassword(email);
+  }
+
+  // @docs  Any User Can verify code
+  // @Route POST /api/v1/auth/verify-code
+  // @access Private for users
+  @Post("verify-code")
+  verifyCode(
+    @Body(
+      new ValidationPipe({
+        forbidNonWhitelisted: true,
+      })
+    )
+    verifyCode: {
+      email: string;
+      code: string;
+    }
+  ) {
+    return this.authService.verifyResetCode(verifyCode);
+  }
+
+  // @docsAny User Can change password
+  //  @Route POST /api/v1/auth/change-password
+  //  @access Private for users=> admin, user
+  @Post("change-password")
+  changePassword(
+    @Body(new ValidationPipe({ forbidNonWhitelisted: true }))
+    changePassword: {
+      token: string;
+      newPassword: string;
+    }
+  ) {
+    console.log(changePassword);
+    return this.authService.changePassword(
+      changePassword.token,
+      changePassword.newPassword
+    );
+  }
+}
